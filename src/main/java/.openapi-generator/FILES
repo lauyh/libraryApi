@@ -1,0 +1,11 @@
+.openapi-generator-ignore
+README.md
+pom.xml
+src/main/java/com/library/api/ApiUtil.java
+src/main/java/com/library/api/DefaultApi.java
+src/main/java/com/library/model/Book.java
+src/main/java/com/library/model/Borrower.java
+src/main/java/com/library/model/Fine.java
+src/main/java/com/library/model/ValidateIsbnFormat200Response.java
+src/main/java/com/library/model/ValidateIsbnFormat400Response.java
+src/main/java/com/library/model/ValidateIsbnFormatRequest.java

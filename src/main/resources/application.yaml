@@ -1,0 +1,10 @@
+spring:
+  profiles.active: dev
+# Disable JTA warning logs
+logging:
+  level:
+    com:
+      atomikos: OFF
+      icatch: OFF
+      jdbc: OFF
+
