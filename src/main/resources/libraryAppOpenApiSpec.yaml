@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Library Management System API
+  description: API for managing library borrowing system
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+components:
+  schemas:
+    Borrower:
+      type: object
+      properties:
+        borrowerId:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        membershipDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, EXPIRED]
+
+    Book:
+      type: object
+      required:
+        - title
+        - isbn
+        - author
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        title:
+          type: string
+          minLength: 1
+          description: Book title - must be consistent with ISBN
+        isbn:
+          type: string
+          pattern: '^[0-9]{13}$'
+          description: 13-digit ISBN number - uniquely identifies a book
+        author:
+          type: string
+          minLength: 1
+          description: Book author - must be consistent with ISBN
+        publisher:
+          type: string
+        publicationYear:
+          type: integer
+          minimum: 1000
+          maximum: 9999
+        categoryId:
+          type: integer
+          format: int64
+        description:
+          type: string
+      description: Books with the same ISBN must have identical title and author
+
+    Fine:
+      type: object
+      properties:
+        fineId:
+          type: integer
+          format: int64
+        loanId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
+        issuedDate:
+          type: string
+          format: date
+        paidDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [UNPAID, PAID, WAIVED]
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+
+paths:
+  /books/isbn:
+    post:
+      tags:
+        - Books
+      summary: Validate ISBN format and check existence
+      operationId: validateIsbnFormat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - isbn
+              properties:
+                isbn:
+                  type: string
+                  pattern: '^[0-9]{13}$'
+                  description: ISBN to validate
+                title:
+                  type: string
+                  description: Optional title to check consistency
+                author:
+                  type: string
+                  description: Optional author to check consistency
+      responses:
+        '200':
+          description: ISBN validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    description: Whether the ISBN format is valid
+                  exists:
+                    type: boolean
+                    description: Whether the ISBN exists in the system
+                  consistent:
+                    type: boolean
+                    description: Whether title and author are consistent with existing ISBN (if provided)
+                  existingBook:
+                    $ref: '#/components/schemas/Book'
+                    description: Existing book details if ISBN exists, null otherwise
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /books/isbn/{isbn}:
+    get:
+      tags:
+        - Books
+      summary: Get book details by ISBN
+      operationId: getBookByIsbn
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{13}$'
+      responses:
+        '200':
+          description: Book found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fines/borrower/{borrowerId}:
+    get:
+      tags:
+        - Borrowers
+      summary: Get all fines for a borrower
+      operationId: getBorrowerFines
+      parameters:
+        - name: borrowerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [UNPAID, PAID, WAIVED]
+      responses:
+        '200':
+          description: List of fines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fine'
+        '404':
+          $ref: '#/components/responses/NotFound'
